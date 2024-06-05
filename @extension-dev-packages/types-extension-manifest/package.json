@@ -1,0 +1,31 @@
+{
+  "name": "@extension-dev-packages/types-extension-manifest",
+  "version": "0.0.1",
+  "files": [
+    "dist/"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": {
+    "name": "seasonstorm@icloud.com"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "prepublishOnly": "node scripts/build"
+  },
+  "keywords": [
+    "chrome-extension",
+    "typescript",
+    "rollup-bundle",
+    "monorepo"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/herewardieh/extension-dev-toolkit.git"
+  },
+  "_id": "@extension-dev-packages/types-extension-manifest@0.0.1"
+}

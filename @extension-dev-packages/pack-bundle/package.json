@@ -1,0 +1,53 @@
+{
+  "name": "@extension-dev-packages/pack-bundle",
+  "version": "0.0.1",
+  "bin": {
+    "pack-bundle": "./bin/index.mjs"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "prepublishOnly": "../../node_modules/.bin/pack-bundle"
+  },
+  "keywords": [
+    "monorepo",
+    "rollup",
+    "bundle"
+  ],
+  "author": {
+    "name": "seasonstorm@icloud.com"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "tslib": "^2.6.2",
+    "rollup": "^4.17.2",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "@rollup/plugin-replace": "^5.0.5",
+    "read-pkg": "^9.0.1",
+    "rollup-plugin-dts": "^6.1.1",
+    "lodash-es": "^4.17.21",
+    "chalk": "^5.3.0",
+    "rimraf": "^5.0.5"
+  },
+  "exports": {
+    ".": {
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.ts"
+    },
+    "./index.ts": "./index.ts"
+  },
+  "files": [
+    "dist/",
+    "index.d.ts"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/herewardieh/extension-dev-toolkit.git"
+  },
+  "_id": "@extension-dev-packages/pack-bundle@0.0.1",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs"
+}

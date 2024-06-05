@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": ".tmp",
+    "esModuleInterop": true,
+    "lib": [
+      "DOM",
+      "ESNext"
+    ],
+    "target": "es2017",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "skipLibCheck": true,
+    "importHelpers": true,
+    "diagnostics": true
+  },
+  "exclude": [
+    ".tmp/*",
+    "dist/*",
+    "node_modules/*"
+  ]
+}
