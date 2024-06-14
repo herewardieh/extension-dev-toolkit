@@ -1,6 +1,6 @@
 {
   "name": "@extension-dev-packages/extension-cli",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "packBundle": {
     "rollupReplace": {
       "process.env.APP_VERSION": "0.0.1"

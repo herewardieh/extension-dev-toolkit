@@ -3,7 +3,7 @@ name: release
 on:
   push:
     tags:
-    - 'v*'
+      - "v*"
 
 jobs:
   publish-npm:
@@ -43,12 +43,11 @@ jobs:
 
       - name: Build bundler before publish
         run: pnpm run bootstrap
-         
+
       - name: Create Release Pull Request or Publish to npm
         id: changesets
         uses: changesets/action@v1
         with:
-          version: npx changeset version
           publish: npx changeset publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

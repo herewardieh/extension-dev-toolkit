@@ -1,6 +1,6 @@
 {
   "name": "@extension-dev-packages/pack-bundle",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "bin": {
     "pack-bundle": "./bin/index.mjs"
   },

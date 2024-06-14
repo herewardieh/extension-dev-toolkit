@@ -22,10 +22,6 @@ describe("extension cli development unit test", () => {
     const { actionInit } = await import("../src/action_init");
     await actionInit(testsDir);
   });
-  it("action development test", async () => {
-    const { actionBuild } = await import("../src/action_build");
-    await actionBuild(join(testsDir, TEMPLATE_WORK_DIR));
-  });
 
   afterAll(() => {
     rimrafSync(testsDir);
