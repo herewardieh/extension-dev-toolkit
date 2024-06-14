@@ -1,16 +1,14 @@
 import react from "@vitejs/plugin-react-swc";
 import { build } from "vite";
-import { keys, map, join } from "lodash-es";
+import { keys, map, join, isEmpty } from "lodash-es";
 import { Extension } from "../src/type";
 import { resolve } from "path";
-import { cwd } from "process";
 import mvBundleFile from "./vite-plugin-mvbundle";
 import fse from "fs-extra";
 import { logger } from "./logger";
+import { existsSync } from "fs";
 
-const targetPath = resolve(cwd(), "target-plugin");
-
-const buildPage = async (pageUi: Extension.TPageUI) => {
+const buildPage = async (pageUi: Extension.TPageUI, targetPath: string) => {
   logger.info(
     `start to package your pages... ${join(
       map(keys(pageUi), (type) => type),
@@ -19,6 +17,7 @@ const buildPage = async (pageUi: Extension.TPageUI) => {
   );
   const assetsFileName = "[name].[hash].[ext]";
   const fileName = "[name].[hash].js";
+
   await build({
     build: {
       rollupOptions: {
@@ -35,7 +34,10 @@ const buildPage = async (pageUi: Extension.TPageUI) => {
   });
 };
 
-const buildScripts = async (scripts: Extension.IScripts[]) => {
+const buildScripts = async (
+  scripts: Extension.IScripts[],
+  targetPath: string,
+) => {
   for (const script of scripts) {
     logger.info(`start to package your script - ${script.compileName}`);
     await build({
@@ -55,15 +57,20 @@ const buildScripts = async (scripts: Extension.IScripts[]) => {
   }
 };
 
-const copyAssets = () => {
-  fse.copy(resolve(cwd(), "assets"), resolve(targetPath, "assets"));
+const copyAssets = (targetPath: string) => {
+  const currWorkDir = resolve(targetPath, "..");
+  const assetDir = resolve(currWorkDir, "assets");
+  if (existsSync(assetDir)) {
+    fse.copy(assetDir, resolve(targetPath, "assets"));
+  }
 };
 
 export const buildProject = async (
   page_ui: Extension.TPageUI,
   scripts: Extension.IScripts[],
+  targetPath: string,
 ) => {
-  await buildPage(page_ui);
-  await buildScripts(scripts);
-  copyAssets();
+  if (!isEmpty(page_ui)) await buildPage(page_ui, targetPath);
+  await buildScripts(scripts, targetPath);
+  copyAssets(targetPath);
 };

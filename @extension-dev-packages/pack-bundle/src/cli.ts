@@ -1,16 +1,17 @@
 import { cwd } from "process";
-import { dirname, join } from "path";
-import { logger } from "./logger.js";
+import { dirname, join, resolve } from "path";
+import { logger } from "./logger";
 import { existsSync, writeFileSync } from "fs";
 import { OutputOptions, rollup } from "rollup";
-import { resolveRoot, handleDeps } from "./utils.js";
+import { resolveRoot, handleDeps } from "./utils";
 import typescript from "@rollup/plugin-typescript";
-import { createMonoExternal } from "./createMonoExternal.js";
+import { createMonoExternal } from "./rollupCreateMonoExternal";
 import replace from "@rollup/plugin-replace";
 import { readPackage } from "read-pkg";
-import { generateDts } from "./generateDts.js";
+import { generateDts } from "./generate-dts";
 import dts from "rollup-plugin-dts";
 import { isEmpty, uniq } from "lodash-es";
+import yargs from "yargs";
 
 const output = {
   dir: ".",
@@ -19,12 +20,20 @@ const output = {
   module: "./dist/index.mjs",
 };
 
-export const main = async () => {
-  const monoRoot = resolveRoot(cwd());
-  const indexTsFile = join(cwd(), "index.ts");
-  if (!existsSync(indexTsFile))
-    return logger.error("Not found entry point, please check!");
-  const pkg = await readPackage();
+export const main = async (currWorkDir = cwd()) => {
+  const opt = await yargs(process.argv.slice(2)).argv;
+  const assignDir = opt?._?.[0] as string;
+  if (assignDir) currWorkDir = resolve(assignDir);
+
+  const monoRoot = resolveRoot(currWorkDir);
+  const indexTsFile = join(currWorkDir, "index.ts");
+
+  if (!existsSync(indexTsFile)) {
+    return logger.error("Not found javascript file entry point.");
+  }
+
+  const pkg = await readPackage({ cwd: currWorkDir });
+
   const monoPkg = await readPackage({ cwd: monoRoot });
 
   const rollupReplace: Record<string, string> =
@@ -32,26 +41,27 @@ export const main = async () => {
 
   const sideEffects: string[] = pkg.packBundle?.sideEffects || [];
 
+  const autoExternal = createMonoExternal(monoRoot, pkg);
+
+  // generate mjs and cjs files
   const jsFileOutputOptions = [
     {
-      dir: join(cwd(), dirname(output.module)),
+      dir: join(currWorkDir, dirname(output.module)),
       format: "es",
       entryFileNames: "[name].mjs",
       chunkFileNames: "[name]-[hash].mjs",
     },
     {
-      dir: join(cwd(), dirname(output.main)),
+      dir: join(currWorkDir, dirname(output.main)),
       format: "cjs",
       entryFileNames: "[name].cjs",
       chunkFileNames: "[name]-[hash].cjs",
       exports: "named",
     },
   ] as OutputOptions[];
-  const autoExternal = createMonoExternal(monoRoot, pkg);
-  // generate mjs and cjs file
-  logger.info("start bundling mjs and cjs file...");
+  logger.info("start bundling mjs and cjs files...");
   await rollup({
-    input: join(cwd(), output.dir, "index.ts"),
+    input: join(currWorkDir, output.dir, "index.ts"),
     output: jsFileOutputOptions,
     plugins: [
       autoExternal(),
@@ -66,19 +76,19 @@ export const main = async () => {
       bundle.write(output);
     });
   });
-  logger.success("mjs and cjs bundled success.");
+  logger.success("mjs and js files bundled success.");
 
   // generate index.d.ts file
   const tsDocOutputOptions = [
     {
-      file: join(cwd(), output.types),
+      file: join(currWorkDir, output.types),
       format: "es",
     },
   ] as OutputOptions[];
-  logger.info("start global index.d.ts file...");
-  const index = await generateDts(monoRoot, join(cwd(), output.dir));
+  logger.info("start generating index.d.ts file...");
+  const dtsEntry = await generateDts(monoRoot, join(currWorkDir, output.dir));
   rollup({
-    input: index,
+    input: dtsEntry,
     output: tsDocOutputOptions,
     plugins: [autoExternal(), dts()],
   }).then((bundle) => {
@@ -86,22 +96,19 @@ export const main = async () => {
       bundle.write(output);
     });
   });
-  logger.success("global index.d.ts bundled success.");
+  logger.success("index.d.ts bundled success.");
+
   // generate package.json file for publish
-  logger.info("start building package json file...");
-
+  logger.info("start building package.json...");
   const usedPkgs = uniq([...autoExternal.usedPkgs, ...sideEffects]);
-
   const repoDependencies = {
     ...handleDeps(usedPkgs, pkg).repoDependencies,
     ...handleDeps(usedPkgs, monoPkg).repoDependencies,
   };
-
   const repoPeerDependencies = {
     ...handleDeps(usedPkgs, pkg).repoPeerDependencies,
     ...handleDeps(usedPkgs, monoPkg).repoPeerDependencies,
   };
-
   const template = {
     ...pkg,
     type: "module",
@@ -125,9 +132,13 @@ export const main = async () => {
       prepublishOnly: "../../node_modules/.bin/pack-bundle",
     },
     readme: undefined,
+    repository: {
+      type: "git",
+      url: "https://github.com/herewardieh/extension-dev-toolkit.git",
+    },
   };
   writeFileSync(
-    join(cwd(), "package.json"),
+    join(currWorkDir, "package.json"),
     `${JSON.stringify(template, null, 2)}`,
   );
   logger.success("package.json file generated success.");

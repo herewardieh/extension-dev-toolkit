@@ -1,31 +1,40 @@
 import { Plugin } from "vite";
 import { Extension } from "../src/type";
-import { keys, values } from "lodash-es";
+import { keys } from "lodash-es";
+import path from "path";
 import { moveFile } from "move-file";
-import { resolve, dirname } from "path";
 import { rimrafSync } from "rimraf";
-import pathParse from "path-parse";
+import { existsSync } from "fs";
+import { cwd } from "process";
 
 export default function mvBundleFile(
   pageUi: Extension.TPageUI,
   targetPath: string,
 ): Plugin {
+  const projectRoot = cwd();
+
   const files: Record<string, string>[] = keys(pageUi).map((name) => {
-    return { [`${name}.html`]: pageUi[name as Extension.TPageUIType] };
+    const entryPointPath = pageUi[name as Extension.TPageUIType];
+    const targetPointPath = path.resolve(
+      targetPath,
+      path.relative(projectRoot, entryPointPath),
+    );
+    return { [`${name}.html`]: targetPointPath };
   });
 
   return {
     name: "vite-plugin-mvbundle",
     closeBundle: async () => {
       for (let file of files) {
-        const to = keys(file)?.[0];
+        const to = keys(file)[0];
         const from = file[to];
-        await moveFile(resolve(targetPath, from), resolve(targetPath, to));
+        await moveFile(from, path.resolve(targetPath, to));
+        const deletePath = path.resolve(
+          targetPath,
+          path.relative(targetPath, from).split(path.sep)?.[0],
+        );
+        if (existsSync(deletePath)) rimrafSync(deletePath);
       }
-      values(pageUi).forEach((filePath) => {
-        const dir = pathParse(resolve(targetPath, filePath)).dir;
-        rimrafSync(dirname(dir));
-      });
     },
   };
 }

@@ -20,6 +20,6 @@ export const cli = async () => {
     .description(
       "packaging and generating browser extensions for distribution to users",
     )
-    .action(actionBuild);
+    .action(() => actionBuild());
   program.parse(process.argv);
 };

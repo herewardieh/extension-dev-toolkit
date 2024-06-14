@@ -4,10 +4,12 @@ import { join, resolve } from "path";
 import { temporaryDirectory } from "tempy";
 import { cwd } from "process";
 import { spawnSync } from "child_process";
-import { TEMPLATE_GIT_ADDR } from "../utils/constant";
 import fse from "fs-extra";
 import { rimrafSync } from "rimraf";
 import { logger } from "../utils/logger";
+
+const TEMPLATE_GIT_ADDR =
+  "https://github.com/herewardieh/extension-boilerplate-template.git";
 
 const downloadTemplate = () => {
   const tempDirectory = temporaryDirectory();
@@ -18,7 +20,7 @@ const downloadTemplate = () => {
     });
   } catch (error: any) {
     if (error.errno === "ENOENT") {
-      throw new Error("Unable to clone example repo. `git` is not in PATH.");
+      throw new Error("git not found in PATH");
     }
   }
   return tempDirectory;
@@ -50,19 +52,20 @@ const installDependencies = (downloadDirPath: string) => {
   }
 };
 
-export const actionInit = async () => {
+export const actionInit = async (currWorkDir = cwd()) => {
   const { data: rawName } = await inquirer.prompt({
     name: "data",
     prefix: "---EXTENSION CLI---\n",
     message: "Extension name:",
   });
-  const projectDirectory = resolve(cwd(), kebabCase(rawName));
+  const projectDirectory = resolve(currWorkDir, kebabCase(rawName));
   logger.info("Downloading template files from git...");
   const downloadDirPath = downloadTemplate();
   logger.info(`Creating new project from ${projectDirectory}`);
-  fse.copySync(downloadDirPath, projectDirectory);
-  rimrafSync(join(projectDirectory, ".git"));
   logger.info("Installing dependencies...");
   installDependencies(downloadDirPath);
+  fse.copySync(downloadDirPath, projectDirectory);
+  rimrafSync(join(projectDirectory, ".git"));
+  rimrafSync(downloadDirPath);
   logger.success("New project created success.");
 };

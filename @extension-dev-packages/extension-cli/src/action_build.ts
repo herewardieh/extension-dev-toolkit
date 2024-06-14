@@ -1,9 +1,11 @@
 import { resolve, relative } from "path";
-import { readdirSync, readFileSync, writeFileSync } from "fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "fs";
 import { cwd } from "process";
-import jszip from "jszip";
+import JSZip from "jszip";
 import { rimrafSync } from "rimraf";
 import { actionDev } from "./action_dev";
+
+var zip = new JSZip();
 
 const getFiles = (dir: string) => {
   const entries = readdirSync(dir, { withFileTypes: true });
@@ -24,15 +26,15 @@ const compressFile2Zip = async (srcPath: string, outPath: string) => {
   for (const filePath of files) {
     const content = readFileSync(filePath);
     const relativePath = relative(srcPath, filePath);
-    jszip.file(relativePath, content);
+    zip.file(relativePath, content);
   }
-  const zipBuffer = await jszip.generateAsync({ type: "nodebuffer" });
+  const zipBuffer = await zip.generateAsync({ type: "nodebuffer" });
   writeFileSync(outPath, zipBuffer);
 };
 
-export const actionBuild = async () => {
-  await actionDev(true);
-  const outPath = resolve(cwd(), "target-plugin.zip");
-  rimrafSync(outPath);
-  compressFile2Zip(resolve(cwd(), "target-plugin"), outPath);
+export const actionBuild = async (currWorkDir = cwd()) => {
+  await actionDev(true, currWorkDir);
+  const outPath = resolve(currWorkDir, "target-plugin.zip");
+  if (existsSync(outPath)) rimrafSync(outPath);
+  compressFile2Zip(resolve(currWorkDir, "target-plugin"), outPath);
 };

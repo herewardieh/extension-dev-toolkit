@@ -2,11 +2,11 @@ import { IManifest } from "@extension-dev-packages/types-extension-manifest";
 import { Extension } from "../src/type";
 import { writeFileSync } from "fs";
 import { resolve } from "path";
-import { cwd } from "process";
 
 export const generateManifest = (
   application_manifest: IManifest,
   pageUi: Extension.TPageUI,
+  targetPath: string,
 ) => {
   let manifest: IManifest = {
     ...application_manifest,
@@ -45,7 +45,7 @@ export const generateManifest = (
     };
   }
   writeFileSync(
-    resolve(cwd(), "target-plugin", "manifest.json"),
+    resolve(targetPath, "manifest.json"),
     JSON.stringify(manifest, null, "\t"),
   );
 };

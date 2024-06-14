@@ -2,7 +2,7 @@ import { execSync } from "child_process";
 import { existsSync, mkdirSync } from "fs";
 import { relative, join } from "path";
 import { rimrafSync } from "rimraf";
-import { logger } from "./logger.js";
+import { logger } from "./logger";
 
 const runGenerate = async (
   projectRoot: string,
@@ -12,9 +12,12 @@ const runGenerate = async (
   mkdirSync(tmpDir, { recursive: true });
   logger.info(`typescript compiling ....`);
   try {
-    const output = execSync("npx tsc", {
-      cwd: projectRoot,
-    });
+    const output = execSync(
+      "npx tsc --declaration --emitDeclarationOnly --diagnostics --skipLibCheck  --rootDir . --outDir .tmp",
+      {
+        cwd: projectRoot,
+      },
+    );
     logger.success("typescript files compiling success.");
     logger.info(`information as below: `);
     logger.list(String(output));
@@ -29,10 +32,7 @@ export const generateDts = async (
   cwd: string,
 ): Promise<string> => {
   const monoPkg = relative(monoRoot, cwd);
-
   const tmpRoot = join(monoRoot, ".tmp");
-
   await runGenerate(monoRoot, tmpRoot);
-
   return join(monoRoot, ".tmp", monoPkg, "index.d.ts");
 };

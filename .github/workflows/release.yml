@@ -2,8 +2,8 @@ name: release
 
 on:
   push:
-    branches:
-      - main
+    tags:
+    - 'v*'
 
 jobs:
   publish-npm:
@@ -38,9 +38,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Run script test units
+        run: pnpm run test
 
       - name: Build bundler before publish
-        run: cd ./@extension-dev-packages/pack-bundle && node --loader ts-node/esm bin.ts
+        run: pnpm run bootstrap
          
       - name: Create Release Pull Request or Publish to npm
         id: changesets
